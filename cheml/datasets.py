@@ -86,7 +86,8 @@ def _get_first_writeable_path(paths, filename):
     errors = []
     for dirname, filename in zip(dirs, abs_paths):
         try:
-            os.makedirs(dirname, exist_ok=True)
+            if not os.exists(dirname):
+                os.makedirs(dirname)
             existed = os.path.exists(filename)
             with open(filename, 'a'):
                 pass
@@ -136,9 +137,12 @@ def _open_HF_pickle(filename):
 
 
     with open(filename, 'rb') as f:
-        u = pickle._Unpickler(f)
-        u.encoding = 'latin1'
-        p = u.load()
+        try:
+            u = pickle._Unpickler(f)
+            u.encoding = 'latin1'
+            p = u.load()
+        except AttributeError:
+            p = pickle.load(f)
     return Bunch(**p)
 
 
