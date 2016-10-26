@@ -1,6 +1,7 @@
 """Dataset loader helpers. This file collects everything related to downloading
 and organizing CheML and other open datasets for computational chemistry."""
 import os
+import numpy as np
 try:
     from urllib.request import urlopen
     from urllib.error import HTTPError, URLError
@@ -8,6 +9,8 @@ except:
     from urllib2 import urlopen, HTTPError, URLError
 import pickle
 from sklearn.datasets.base import Bunch
+from scipy.io import loadmat
+from sklearn.decomposition import PCA
 
 
 def get_data_dirs(data_dir=None):
@@ -58,7 +61,8 @@ dataset_info = dict(
     HX3=("HF/HX3.pkl", HF_URL_BASE + "data_HX3.pkl"),
     HX4=("HF/HX4.pkl", HF_URL_BASE + "data_HX4.pkl"),
     HX5=("HF/HX5.pkl", HF_URL_BASE + "data_HX5.pkl"),
-    HX6=("HF/HX6.pkl", HF_URL_BASE + "data_HX6.pkl")
+    HX6=("HF/HX6.pkl", HF_URL_BASE + "data_HX6.pkl"),
+    QM7=("GDB13/qm7.mat", "http://quantum-machine.org/data/qm7.mat")
     )
 
 
@@ -86,7 +90,7 @@ def _get_first_writeable_path(paths, filename):
     errors = []
     for dirname, filename in zip(dirs, abs_paths):
         try:
-            if not os.exists(dirname):
+            if not os.path.exists(dirname):
                 os.makedirs(dirname)
             existed = os.path.exists(filename)
             with open(filename, 'a'):
@@ -169,6 +173,36 @@ def load_HF6(path=None, large=False):
     dataset_name = 'HF6_10K' if large else 'HF6_1K'
     filename = _get_or_download_dataset(dataset_name, path=path)
     return _open_HF_pickle(filename)
+
+
+def load_qm7(path=None, align=False, only_planar=False, planarity_tol=.01):
+    filename = _get_or_download_dataset("QM7", path=path)
+    qm7_file = loadmat(filename)
+    qm7_bunch = Bunch(**{k:v for k, v in qm7_file.items()
+        if k in ['P', 'X', 'T', 'Z', 'R']})
+    
+    if align or only_planar:
+        pca = PCA()
+        keep_molecule = []
+        for molecule in qm7_bunch.R:
+            transformed = pca.fit_transform(molecule)
+            var_2D = pca.explained_variance_ratio_[:2].sum()
+            keep = (not only_planar) or var_2D > 1 - planarity_tol
+            keep_molecule.append(keep)
+            if align and keep:
+                molecule[:] = transformed
+        if only_planar:
+            keep_molecule = np.array(keep_molecule)
+            qm7_bunch['X'] = qm7_bunch.X[keep_molecule]
+            qm7_bunch['T'] = qm7_bunch.T[:, keep_molecule]
+            qm7_bunch['Z'] = qm7_bunch.Z[keep_molecule]
+            qm7_bunch['R'] = qm7_bunch.R[keep_molecule]
+
+            P = [p[keep_molecule[p]] for p in qm7_bunch['P']]
+            qm7_bunch['P'] = P
+
+    return qm7_bunch
+
 
 
 
