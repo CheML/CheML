@@ -184,13 +184,16 @@ def load_qm7(path=None, align=False, only_planar=False, planarity_tol=.01):
     if align or only_planar:
         pca = PCA()
         keep_molecule = []
-        for molecule in qm7_bunch.R:
-            transformed = pca.fit_transform(molecule)
+        for positions, charges in zip(qm7_bunch.R, qm7_bunch.Z):
+            transformed = np.vstack([
+                pca.fit_transform(positions[charges != 0]),
+                np.zeros([(charges == 0).sum(), 3])])
             var_2D = pca.explained_variance_ratio_[:2].sum()
             keep = (not only_planar) or var_2D > 1 - planarity_tol
             keep_molecule.append(keep)
             if align and keep:
-                molecule[:] = transformed
+                positions[:] = transformed
+           
         if only_planar:
             keep_molecule = np.array(keep_molecule)
             qm7_bunch['X'] = qm7_bunch.X[keep_molecule]
