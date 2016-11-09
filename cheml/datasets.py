@@ -48,11 +48,12 @@ HF_URL_BASE = ("https://raw.githubusercontent.com/SamKChang/"
                 "QM_wavelet/master/data/")
 
 dataset_info = dict(
-    HF2=("HF/HF2.pkl", HF_URL_BASE + "data_m2.pkl"),
+    HF2_1K=("HF/HF2_1K.pkl", HF_URL_BASE + "data_m2.pkl"),
     HF3_1K=("HF/HF3_1K.pkl", HF_URL_BASE + "data_m3.pkl"),
     HF4_1K=("HF/HF4_1K.pkl", HF_URL_BASE + "data_m4.pkl"),
     HF5_1K=("HF/HF5_1K.pkl", HF_URL_BASE + "data_m5.pkl"),
     HF6_1K=("HF/HF6_1K.pkl", HF_URL_BASE + "data_m6.pkl"),
+    HF2_7K=("HF/HF2_7K.pkl", HF_URL_BASE + "data_m2_7k.pkl"),
     HF3_10K=("HF/HF3_10K.pkl", HF_URL_BASE + "data_m3_10k.pkl"),
     HF4_10K=("HF/HF4_10K.pkl", HF_URL_BASE + "data_m4_10k.pkl"),
     HF5_10K=("HF/HF5_10K.pkl", HF_URL_BASE + "data_m5_10k.pkl"),
@@ -150,8 +151,9 @@ def _open_HF_pickle(filename):
     return Bunch(**p)
 
 
-def load_HF2(path=None):
-    filename = _get_or_download_dataset('HF2', path=path)
+def load_HF2(path=None, large=False):
+    dataset_name = 'HF2_7K' if large else 'HF2_1K'
+    filename = _get_or_download_dataset(dataset_name, path=path)
     return _open_HF_pickle(filename)
 
 def load_HF3(path=None, large=False):
