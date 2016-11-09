@@ -177,6 +177,31 @@ def load_HF6(path=None, large=False):
     return _open_HF_pickle(filename)
 
 
+def load_HX2(path=None):
+    filename = _get_or_download_dataset('HX2', path=path)
+    return _open_HF_pickle(filename)
+
+def load_HX3(path=None):
+    dataset_name = 'HX3'
+    filename = _get_or_download_dataset(dataset_name, path=path)
+    return _open_HF_pickle(filename)
+
+def load_HX4(path=None):
+    dataset_name = 'HX4'
+    filename = _get_or_download_dataset(dataset_name, path=path)
+    return _open_HF_pickle(filename)
+
+def load_HX5(path=None):
+    dataset_name = 'HX5'
+    filename = _get_or_download_dataset(dataset_name, path=path)
+    return _open_HF_pickle(filename)
+
+def load_HX6(path=None):
+    dataset_name = 'HX6'
+    filename = _get_or_download_dataset(dataset_name, path=path)
+    return _open_HF_pickle(filename)
+
+
 def load_qm7(path=None, align=False, only_planar=False, planarity_tol=.01):
     filename = _get_or_download_dataset("QM7", path=path)
     qm7_file = loadmat(filename)
