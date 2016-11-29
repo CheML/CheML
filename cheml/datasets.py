@@ -215,6 +215,11 @@ def load_qm7(path=None, align=False, only_planar=False, planarity_tol=.01):
             transformed = np.vstack([
                 pca.fit_transform(positions[charges != 0]),
                 np.zeros([(charges == 0).sum(), 3])])
+            # the following evaluates how much variance is in the first two axes
+            # before this, the algorithm was also using zero positions, leading
+            # to 454 planar molecules:
+            # pca.fit(positions).explained_variance_ratio_[:2].sum() #  
+            # currently, the algorithm yields 415 planar molecules
             var_2D = pca.explained_variance_ratio_[:2].sum()
             keep = (not only_planar) or var_2D > 1 - planarity_tol
             keep_molecule.append(keep)
@@ -224,12 +229,21 @@ def load_qm7(path=None, align=False, only_planar=False, planarity_tol=.01):
         if only_planar:
             keep_molecule = np.array(keep_molecule)
             qm7_bunch['X'] = qm7_bunch.X[keep_molecule]
-            qm7_bunch['T'] = qm7_bunch.T[:, keep_molecule]
+            qm7_bunch['T'] = qm7_bunch.T[:, keep_molecule].ravel()
             qm7_bunch['Z'] = qm7_bunch.Z[keep_molecule]
             qm7_bunch['R'] = qm7_bunch.R[keep_molecule]
 
-            P = [p[keep_molecule[p]] for p in qm7_bunch['P']]
+            new_molecule_indices = -np.ones_like(keep_molecule, dtype='int')
+            new_molecule_indices[keep_molecule] = np.arange(keep_molecule.sum())
+            P = [new_molecule_indices[p[keep_molecule[p]]]
+                    for p in qm7_bunch['P']]
             qm7_bunch['P'] = P
+            CV = []
+            for i in range(len(P)):
+                train = np.concatenate([p for j, p in enumerate(P) if j != i])
+                test = P[i]
+                CV.append((train, test))
+            qm7_bunch['CV'] = CV
 
     return qm7_bunch
 
