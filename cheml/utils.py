@@ -1,6 +1,25 @@
 import numpy as np 
 from sklearn.utils import check_random_state
 from numbers import Number
+import csv
+import os 
+_elements=None
+
+def load_elements():
+	atoms_fname= os.path.join(os.path.dirname(__file__),'data/atoms.csv')
+	with open(atoms_fname) as fh:
+		lines=list(csv.reader(fh,delimiter='\t'))[1:]
+	for line in lines:
+		line[0]=int(line[0])
+		line[-1]=list(map(int,line[-1].split(', ')))
+	return lines
+
+def get_valence(Z):
+	global _elements
+	if _elements is None:
+		_elements=load_elements()
+	V=np.array([0]+[line[-1][-1] for line in _elements])
+	return V[Z]
 
 def augment(positions, translation_intervals=1,
 			rotation_intervals=1, return_translations=False,
@@ -51,3 +70,4 @@ def augment(positions, translation_intervals=1,
 	if len(output)==1:
 		output=output[0]
 	return output
+	
