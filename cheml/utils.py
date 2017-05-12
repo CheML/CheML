@@ -5,7 +5,10 @@ import csv
 import os 
 _elements=None
 
-def load_elements():
+def _load_elements():
+	"""
+	returns a list of lists like [nuclear charge, element name, valence] for each element
+	"""
 	atoms_fname= os.path.join(os.path.dirname(__file__),'data/atoms.csv')
 	with open(atoms_fname) as fh:
 		lines=list(csv.reader(fh,delimiter='\t'))[1:]
@@ -15,16 +18,45 @@ def load_elements():
 	return lines
 
 def get_valence(Z):
+	"""
+	parameters
+	==========
+		Z: numpy array with nuclear charges
+	returns:
+	========
+		out: array of the same size as Z with the valence of the corresponding atom 
+	"""
 	global _elements
 	if _elements is None:
-		_elements=load_elements()
+		_elements=_load_elements()
 	V=np.array([0]+[line[-1][-1] for line in _elements])
 	return V[Z]
 
 def augment(positions, translation_intervals=1,
 			rotation_intervals=1, return_translations=False,
 			return_rotations=False, random_state=0):
-	
+	"""
+	Creates new molecules by applying random rotations and translations to the ones given.
+	parameters:
+	===========
+		postions: [N,M,3] array of M atom positions for N molecules
+		translation_intervals:  list or number
+								list: the translation will be a numver in the interval defined by the list
+								number: the tranlation will be a numbeer in the interval [-number, number]
+		rotation_intervals: list or number
+							 list: the rotation will be a number representing degrees in the interval defined by the list 
+							 number: the rotation will be a number representing degrees in the interval [-number,number] 
+		return_translations: boolean
+							return the sampled translations
+		return_rotations: boolean
+							return the sampled rotations
+		random_state: Initial state for the random number generator
+	returns:
+	========
+		out: array of the same shape as positions with new positions
+		<translations>: [N,3] with the applied translations
+		<rotations>: [N,3,3] with the applied translations
+	"""
 	if isinstance(translation_intervals,Number):
 		translation_intervals=(-translation_intervals,translation_intervals)
 	if len(translation_intervals)==2:
@@ -70,4 +102,3 @@ def augment(positions, translation_intervals=1,
 	if len(output)==1:
 		output=output[0]
 	return output
-	
