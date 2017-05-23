@@ -7,7 +7,10 @@ _elements=None
 
 def _load_elements():
 	"""
-	returns a list of lists like [nuclear charge, element name, valence] for each element
+	Loads chemical element information.
+	
+	Returns:
+	    list: list of lists with the following entries [nuclear charge, element name, valence] for each element
 	"""
 	atoms_fname= os.path.join(os.path.dirname(__file__),'data/atoms.csv')
 	with open(atoms_fname) as fh:
@@ -19,12 +22,13 @@ def _load_elements():
 
 def get_valence(Z):
 	"""
-	parameters
-	==========
-		Z: numpy array with nuclear charges
-	returns:
-	========
-		out: array of the same size as Z with the valence of the corresponding atom 
+	Converts array of nuclear charges to array of corresponding valence.
+
+	Args:
+	    Z (numpy ndarray): array with nuclear charges
+	
+	Returns:
+	    numpy ndarray: array of the same size as Z with the valence of the corresponding atom 
 	"""
 	global _elements
 	if _elements is None:
@@ -32,30 +36,24 @@ def get_valence(Z):
 	V=np.array([0]+[line[-1][-1] for line in _elements])
 	return V[Z]
 
+
 def augment(positions, translation_intervals=1,
 			rotation_intervals=1, return_translations=False,
 			return_rotations=False, random_state=0):
-	"""
-	Creates new molecules by applying random rotations and translations to the ones given.
-	parameters:
-	===========
-		postions: [N,M,3] array of M atom positions for N molecules
-		translation_intervals:  list or number
-								list: the translation will be a numver in the interval defined by the list
-								number: the tranlation will be a numbeer in the interval [-number, number]
-		rotation_intervals: list or number
-							 list: the rotation will be a number representing degrees in the interval defined by the list 
-							 number: the rotation will be a number representing degrees in the interval [-number,number] 
-		return_translations: boolean
-							return the sampled translations
-		return_rotations: boolean
-							return the sampled rotations
-		random_state: Initial state for the random number generator
-	returns:
-	========
-		out: array of the same shape as positions with new positions
-		<translations>: [N,3] with the applied translations
-		<rotations>: [N,3,3] with the applied translations
+	"""Creates new molecules by applying random rotations and translations to the given atom positions.
+	
+	Args:
+	    positions (numpy ndarray NxMx3): array of M atom positions for N molecules
+	    translation_intervals (int|list, optional): the translations will be made by a uniformly drawn sample in the interval defined by the list or [-number,number] 
+	    rotation_intervals (number|list, optional): the rotations will be made by a uniformly drawn sample (degrees) in the interval defined by the list or [-number,number] 
+	    return_translations (bool, optional): if True it returns the translation offsets for each molecule
+	    return_rotations (bool, optional): if True it returns the rotation matrices used to rotate each molecule
+	    random_state (int, optional): Initial state for random number generator
+	
+	Returns:
+	    numpy ndarray: array of the same shape as positions with new positions
+	    numpy ndarray, optional: [N,3] with the applied translations
+	    numpy ndarray, optional: [N,3,3] with the applied translations
 	"""
 	if isinstance(translation_intervals,Number):
 		translation_intervals=(-translation_intervals,translation_intervals)
