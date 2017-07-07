@@ -59,8 +59,46 @@ def get_calculated_radius(Z):
 	if _elements is None:
 		_elements=_load_elements()
 	V=np.array([0]+[line[4] for line in _elements])
-	ret=V[Z]
-	assert (ret>0).all()
+	ret=V[Z]/100. #angstrom conversion
+	# assert (ret>0).all()
+	return ret
+
+def get_van_der_waals_radius(Z):
+	"""
+	Converts array of nuclear charges to array of corresponding valence.
+
+	Args:
+	    Z (numpy ndarray): array with nuclear charges
+	
+	Returns:
+	    numpy ndarray: array of the same size as Z with the valence of the corresponding atom 
+	"""
+	global _elements
+	if _elements is None:
+		_elements=_load_elements()
+	V=np.array([0]+[line[5] for line in _elements])
+	ret=V[Z]/100. #angstrom conversion
+	# assert (ret>0).all()
+	return ret
+
+
+
+def get_empirical_radius(Z):
+	"""
+	Converts array of nuclear charges to array of corresponding valence.
+
+	Args:
+	    Z (numpy ndarray): array with nuclear charges
+	
+	Returns:
+	    numpy ndarray: array of the same size as Z with the valence of the corresponding atom 
+	"""
+	global _elements
+	if _elements is None:
+		_elements=_load_elements()
+	V=np.array([0]+[line[3] for line in _elements])
+	ret=V[Z]/100. #angstrom conversion
+	# assert (ret>0).all()
 	return ret
 
 
