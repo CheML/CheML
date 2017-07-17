@@ -102,6 +102,25 @@ def get_empirical_radius(Z):
 	return ret
 
 
+def get_covalent1_radius(Z):
+	"""
+	Converts array of nuclear charges to array of corresponding valence.
+
+	Args:
+	    Z (numpy ndarray): array with nuclear charges
+	
+	Returns:
+	    numpy ndarray: array of the same size as Z with the valence of the corresponding atom 
+	"""
+	global _elements
+	if _elements is None:
+		_elements=_load_elements()
+	V=np.array([0]+[line[6] for line in _elements])
+	ret=V[Z]/100. #angstrom conversion
+	# assert (ret>0).all()
+	return ret
+
+
 def augment(positions, translation_intervals=1,
 			rotation_intervals=1, return_translations=False,
 			return_rotations=False, random_state=0):
