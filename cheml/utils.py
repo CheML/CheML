@@ -12,12 +12,21 @@ def _load_elements():
 	Returns:
 	    list: list of lists with the following entries [nuclear charge, element name, valence] for each element
 	"""
+
 	atoms_fname= os.path.join(os.path.dirname(__file__),'data/atoms.csv')
+	import ast
+
 	with open(atoms_fname) as fh:
 		lines=list(csv.reader(fh,delimiter='\t'))[1:]
 	for line in lines:
-		line[0]=int(line[0])
-		line[-1]=list(map(int,line[-1].split(', ')))
+		line[0]=int(line[0]) #Nuclear Charge
+		# line[-1]=list(map(int,line[-1].split(', ')))
+		line[2]=list(ast.literal_eval(line[2])) #Electorns per shell
+		line[3]=int(line[3]) #Empirical Radius of the atom
+		line[4]=int(line[4]) #Calculated Radius of the atom
+		line[5]=int(line[5]) #van der Waals based radius
+		line[6]=int(line[6]) #Covalent radius (single bond)
+		line[7]=int(line[7]) #Covalent radius (triple bond)
 	return lines
 
 def get_valence(Z):
@@ -33,8 +42,83 @@ def get_valence(Z):
 	global _elements
 	if _elements is None:
 		_elements=_load_elements()
-	V=np.array([0]+[line[-1][-1] for line in _elements])
+	V=np.array([0]+[line[2][-1] for line in _elements])
 	return V[Z]
+
+def get_calculated_radius(Z):
+	"""
+	Converts array of nuclear charges to array of corresponding valence.
+
+	Args:
+	    Z (numpy ndarray): array with nuclear charges
+	
+	Returns:
+	    numpy ndarray: array of the same size as Z with the valence of the corresponding atom 
+	"""
+	global _elements
+	if _elements is None:
+		_elements=_load_elements()
+	V=np.array([0]+[line[4] for line in _elements])
+	ret=V[Z]/100. #angstrom conversion
+	# assert (ret>0).all()
+	return ret
+
+def get_van_der_waals_radius(Z):
+	"""
+	Converts array of nuclear charges to array of corresponding valence.
+
+	Args:
+	    Z (numpy ndarray): array with nuclear charges
+	
+	Returns:
+	    numpy ndarray: array of the same size as Z with the valence of the corresponding atom 
+	"""
+	global _elements
+	if _elements is None:
+		_elements=_load_elements()
+	V=np.array([0]+[line[5] for line in _elements])
+	ret=V[Z]/100. #angstrom conversion
+	# assert (ret>0).all()
+	return ret
+
+
+
+def get_empirical_radius(Z):
+	"""
+	Converts array of nuclear charges to array of corresponding valence.
+
+	Args:
+	    Z (numpy ndarray): array with nuclear charges
+	
+	Returns:
+	    numpy ndarray: array of the same size as Z with the valence of the corresponding atom 
+	"""
+	global _elements
+	if _elements is None:
+		_elements=_load_elements()
+	V=np.array([0]+[line[3] for line in _elements])
+	ret=V[Z]/100. #angstrom conversion
+	# assert (ret>0).all()
+	return ret
+
+
+def get_covalent1_radius(Z):
+	"""
+	Converts array of nuclear charges to array of corresponding valence.
+
+	Args:
+	    Z (numpy ndarray): array with nuclear charges
+	
+	Returns:
+	    numpy ndarray: array of the same size as Z with the valence of the corresponding atom 
+	"""
+	global _elements
+	if _elements is None:
+		_elements=_load_elements()
+	V=np.array([0]+[line[6] for line in _elements])
+	ret=V[Z]/100. #angstrom conversion
+	# assert (ret>0).all()
+	return ret
 
 
 def augment(positions, translation_intervals=1,
