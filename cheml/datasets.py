@@ -65,7 +65,8 @@ dataset_info = dict(
     HX5=("HF/HX5.pkl", HF_URL_BASE + "data_HX5.pkl"),
     HX6=("HF/HX6.pkl", HF_URL_BASE + "data_HX6.pkl"),
     QM7=("GDB13/qm7.mat", "http://quantum-machine.org/data/qm7.mat"),
-    QM9=("GDB13/qm9.pkl", "https://ndownloader.figshare.com/files/7003292")
+    QM9=("GDB13/qm9.pkl", "https://ndownloader.figshare.com/files/7003292"),
+    QM9_bonds=("GDB13/qm9_bonds.npz", "https://ndownloader.figshare.com/files/9485986")
     )
 
 
@@ -114,9 +115,9 @@ def _download(url, filename):
         f = urlopen(url)
         with open(filename, 'wb') as local_file:
             local_file.write(f.read())
-    except urllib2.URLError as e:
+    except URLError as e:
         raise
-    except urllib2.HTTPError as e:
+    except HTTPError as e:
         raise
 
 
@@ -233,10 +234,17 @@ def load_HX6(path=None):
 def _gdb_align(bunch, align, only_planar, planarity_tol):
     pca = PCA()
     keep_molecule = []
-    for positions, charges in zip(bunch.R, bunch.Z):
+    has_bonds = "O" in bunch
+    # import ipdb;ipdb.set_trace()
+    for c,(positions, charges) in enumerate(zip(bunch.R, bunch.Z)):
         transformed = np.vstack([
             pca.fit_transform(positions[charges != 0]),
             np.zeros([(charges == 0).sum(), 3])])
+        if has_bonds:
+            transformed_bonds=np.vstack([pca.transform(bunch.B[c,bunch.O[c]!=0].reshape((-1,3))).reshape((-1,2,3)),
+                np.zeros([(bunch.O[c] == 0).sum(),2 , 3])])
+
+
         # the following evaluates how much variance is in the first two axes
         # before this, the algorithm was also using zero positions, leading
         # to 454 planar molecules (for QM7):
@@ -247,15 +255,17 @@ def _gdb_align(bunch, align, only_planar, planarity_tol):
         keep_molecule.append(keep)
         if align and keep:
             positions[:] = transformed
+            if has_bonds:
+                bunch.B[c,:] = transformed_bonds
 
     return keep_molecule
 
 def load_qm7(path=None, align=False, only_planar=False, planarity_tol=.01):
+    # import ipdb;ipdb.set_trace()
     filename = _get_or_download_dataset("QM7", path=path)
     qm7_file = loadmat(filename)
     qm7_bunch = Bunch(**{k:v for k, v in qm7_file.items()
         if k in ['P', 'X', 'T', 'Z', 'R']})
-    
     if align or only_planar:
         keep_molecule = _gdb_align(qm7_bunch, align, only_planar, planarity_tol)
            
@@ -281,12 +291,17 @@ def load_qm7(path=None, align=False, only_planar=False, planarity_tol=.01):
     return qm7_bunch
 
 def load_qm9(path=None, align=False, only_planar=False, planarity_tol=.01):
+    # import ipdb;ipdb.set_trace()
     filename = _get_or_download_dataset("QM9", path=path, suffix='.tar.gz')
+    filename_bonds = _get_or_download_dataset("QM9_bonds", path=path, suffix='.tar.gz')
     qm9_file = _open_pickle(filename)
+    qm9_bonds = np.load(filename_bonds)
     qm9_file['R'] = qm9_file['xyz']
+    qm9_file['B'] = qm9_bonds['bond_atoms']
+    qm9_file['O'] = qm9_bonds['bond_orders']
     qm9_file['T'] = qm9_file['E']
     qm9_bunch = Bunch(**{k:v for k, v in qm9_file.items()
-        if k in ['R', 'Z', 'T']})
+        if k in ['R', 'Z', 'T','B','O']})
 
     if align or only_planar:
         print("processing qm9 molecules, this may take a while...")
