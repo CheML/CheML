@@ -2,6 +2,7 @@
 and organizing CheML and other open datasets for computational chemistry."""
 import os
 import numpy as np
+import sys
 try:
     from urllib.request import urlopen
     from urllib.error import HTTPError, URLError
@@ -66,7 +67,9 @@ dataset_info = dict(
     HX6=("HF/HX6.pkl", HF_URL_BASE + "data_HX6.pkl"),
     QM7=("GDB13/qm7.mat", "http://quantum-machine.org/data/qm7.mat"),
     QM9=("GDB13/qm9.pkl", "https://ndownloader.figshare.com/files/7003292"),
-    QM9_bonds=("GDB13/qm9_bonds.npz", "https://ndownloader.figshare.com/files/9485986")
+    QM9_bonds=("GDB13/qm9_bonds.npz",
+                "https://berkeley.box.com/shared/static/"
+                "2mq7cgd8aypqy7js1mr8lztkn8ky34qj.npz")
     )
 
 
@@ -232,10 +235,11 @@ def load_HX6(path=None):
     return _open_pickle(filename)
 
 def _gdb_align(bunch, align, only_planar, planarity_tol):
+    print("Called _gdb_align")
+    sys.stdout.flush()
     pca = PCA()
     keep_molecule = []
     has_bonds = "O" in bunch
-    # import ipdb;ipdb.set_trace()
     for c,(positions, charges) in enumerate(zip(bunch.R, bunch.Z)):
         transformed = np.vstack([
             pca.fit_transform(positions[charges != 0]),
@@ -293,7 +297,8 @@ def load_qm7(path=None, align=False, only_planar=False, planarity_tol=.01):
 def load_qm9(path=None, align=False, only_planar=False, planarity_tol=.01):
     # import ipdb;ipdb.set_trace()
     filename = _get_or_download_dataset("QM9", path=path, suffix='.tar.gz')
-    filename_bonds = _get_or_download_dataset("QM9_bonds", path=path, suffix='.tar.gz')
+    filename_bonds = _get_or_download_dataset("QM9_bonds", path=path, 
+                                                    suffix=None)
     qm9_file = _open_pickle(filename)
     qm9_bonds = np.load(filename_bonds)
     qm9_file['R'] = qm9_file['xyz']
@@ -303,15 +308,17 @@ def load_qm9(path=None, align=False, only_planar=False, planarity_tol=.01):
     qm9_bunch = Bunch(**{k:v for k, v in qm9_file.items()
         if k in ['R', 'Z', 'T','B','O']})
 
+    sys.stdout.flush()
     if align or only_planar:
-        print("processing qm9 molecules, this may take a while...")
         keep_molecule = _gdb_align(qm9_bunch, align, only_planar, planarity_tol)
-        print("... done.")
 
         if only_planar:
             keep_molecule = np.array(keep_molecule)
             qm9_bunch['T'] = qm9_bunch.T[keep_molecule]
             qm9_bunch['Z'] = qm9_bunch.Z[keep_molecule]
             qm9_bunch['R'] = qm9_bunch.R[keep_molecule]
-
+            qm9_bunch['B'] = qm9_bunch.B[keep_molecule]
+            qm9_bunch['O'] = qm9_bunch.O[keep_molecule]
     return qm9_bunch
+
+
