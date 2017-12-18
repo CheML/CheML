@@ -69,7 +69,10 @@ dataset_info = dict(
     QM9=("GDB13/qm9.pkl", "https://ndownloader.figshare.com/files/7003292"),
     QM9_bonds=("GDB13/qm9_bonds.npz",
                 "https://berkeley.box.com/shared/static/"
-                "2mq7cgd8aypqy7js1mr8lztkn8ky34qj.npz")
+                "2mq7cgd8aypqy7js1mr8lztkn8ky34qj.npz"),
+    QM9_properties=("GDB13/qm9_properties.npy",
+        "https://berkeley.box.com/shared/static/"
+        "ptjxewyrg1ahcs2lkr6fq1jyuyfnoemo.npy")
     )
 
 
@@ -235,7 +238,6 @@ def load_HX6(path=None):
     return _open_pickle(filename)
 
 def _gdb_align(bunch, align, only_planar, planarity_tol):
-    print("Called _gdb_align")
     sys.stdout.flush()
     pca = PCA()
     keep_molecule = []
@@ -299,6 +301,9 @@ def load_qm9(path=None, align=False, only_planar=False, planarity_tol=.01):
     filename = _get_or_download_dataset("QM9", path=path, suffix='.tar.gz')
     filename_bonds = _get_or_download_dataset("QM9_bonds", path=path, 
                                                     suffix=None)
+    filename_properties = _get_or_download_dataset("QM9_properties",
+            path=path, suffix=None)
+
     qm9_file = _open_pickle(filename)
     qm9_bonds = np.load(filename_bonds)
     qm9_file['R'] = qm9_file['xyz']
@@ -308,7 +313,10 @@ def load_qm9(path=None, align=False, only_planar=False, planarity_tol=.01):
     qm9_bunch = Bunch(**{k:v for k, v in qm9_file.items()
         if k in ['R', 'Z', 'T','B','O']})
 
-    sys.stdout.flush()
+    qm9_properties = np.load(filename_properties)
+    property_names = qm9_properties.dtype.names
+    qm9_bunch.update(**{p:qm9_properties[p] for p in property_names})
+
     if align or only_planar:
         keep_molecule = _gdb_align(qm9_bunch, align, only_planar, planarity_tol)
 
