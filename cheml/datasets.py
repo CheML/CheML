@@ -315,7 +315,9 @@ def load_qm9(path=None, align=False, only_planar=False, planarity_tol=.01):
 
     qm9_properties = np.load(filename_properties)
     property_names = qm9_properties.dtype.names
-    qm9_bunch.update(**{p:qm9_properties[p] for p in property_names})
+    qm9_bunch.update(**{p:qm9_properties[p] for p in property_names
+                if p not in ('A', 'B', 'C')})
+    qm9_bunch.update({f'{a}rot': qm9_properties[a] for a in ('A', 'B', 'C')})
 
     if align or only_planar:
         keep_molecule = _gdb_align(qm9_bunch, align, only_planar, planarity_tol)
