@@ -72,7 +72,10 @@ dataset_info = dict(
                 "2mq7cgd8aypqy7js1mr8lztkn8ky34qj.npz"),
     QM9_properties=("GDB13/qm9_properties.npy",
         "https://berkeley.box.com/shared/static/"
-        "ptjxewyrg1ahcs2lkr6fq1jyuyfnoemo.npy")
+        "ptjxewyrg1ahcs2lkr6fq1jyuyfnoemo.npy"),
+    QM9_folds=("GDB13/qm9_folds.npy",
+        "https://berkeley.box.com/shared/static/"
+        "9b5ltx6ia45d2rfx5zsqxcfvpi6gp58w.npy")
     )
 
 
@@ -303,6 +306,8 @@ def load_qm9(path=None, align=False, only_planar=False, planarity_tol=.01):
                                                     suffix=None)
     filename_properties = _get_or_download_dataset("QM9_properties",
             path=path, suffix=None)
+    filename_folds = _get_or_download_dataset("QM9_folds", path=path,
+            suffix=None)
 
     qm9_file = _open_pickle(filename)
     qm9_bonds = np.load(filename_bonds)
@@ -318,6 +323,9 @@ def load_qm9(path=None, align=False, only_planar=False, planarity_tol=.01):
     qm9_bunch.update(**{p:qm9_properties[p] for p in property_names
                 if p not in ('A', 'B', 'C')})
     qm9_bunch.update({'{}rot'.format(a): qm9_properties[a] for a in ('A', 'B', 'C')})
+
+    qm9_folds = np.load(filename_folds)
+    qm9_bunch.update({'P_stratified_Ua': qm9_folds})
 
     if align or only_planar:
         keep_molecule = _gdb_align(qm9_bunch, align, only_planar, planarity_tol)
